@@ -11,9 +11,17 @@ config_version=5
 [application]
 
 config/name="fps test"
-run/main_scene="uid://bwxbn1uxc34jv"
+run/main_scene="uid://cmjeaiig5r5tb"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+Shaker="*uid://cf0kpoiylrc5m"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/shaker/plugin.cfg")
 
 [input]
 

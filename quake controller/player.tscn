@@ -1,0 +1,138 @@
+[gd_scene format=3 uid="uid://callt40l2nsen"]
+
+[ext_resource type="Script" uid="uid://jf8f2swt1btn" path="res://quake controller/playerMovement.gd" id="1_vual4"]
+[ext_resource type="Curve" uid="uid://cidft4romtj4m" path="res://quake controller/45degreecurve.tres" id="2_utu1d"]
+[ext_resource type="Curve" uid="uid://djgi5bfx47o2r" path="res://quake controller/wallRunCurve.tres" id="3_2pbow"]
+[ext_resource type="Curve" uid="uid://b6rd42lxqe5ns" path="res://quake controller/slideDragCurve.tres" id="3_k42sr"]
+[ext_resource type="Curve" uid="uid://cpngxrfh55ani" path="res://quake controller/slopeAngleCurve.tres" id="4_7oetm"]
+[ext_resource type="Script" uid="uid://dmq68tgmv0y5o" path="res://addons/shaker/src/Vector3/shaker_component3D.gd" id="5_14s8p"]
+[ext_resource type="Script" uid="uid://d4js2pv6uycv1" path="res://quake controller/playerCamera.gd" id="6_m7kuq"]
+[ext_resource type="Script" uid="uid://fpurtldcyy0n" path="res://addons/shaker/data/Vector3/BaseShakerType3D.gd" id="6_qarov"]
+[ext_resource type="Resource" uid="uid://utqoywxff7vm" path="res://quake controller/jumpAnim.tres" id="7_1rx65"]
+[ext_resource type="Script" uid="uid://s0kaoanemjrb" path="res://addons/shaker/data/Vector3/ShakerTypeNoiseShake3D.gd" id="7_dascu"]
+[ext_resource type="Resource" uid="uid://wkngmsk4yxqk" path="res://quake controller/landAnim.tres" id="8_v06m6"]
+[ext_resource type="Script" uid="uid://dbrw2gguwqu0j" path="res://addons/shaker/data/Vector3/ShakerPreset3D.gd" id="8_v7qid"]
+[ext_resource type="Resource" uid="uid://no4jod0yl4ul" path="res://quake controller/landRot.tres" id="9_cmqbn"]
+[ext_resource type="Script" uid="uid://cksn22hjxfkiy" path="res://addons/shaker/data/Vector3/ShakerTypeSineWave3D.gd" id="9_d2tfl"]
+[ext_resource type="Resource" uid="uid://ctyc5yv3tn7yp" path="res://quake controller/slideAnim.tres" id="10_qdupb"]
+[ext_resource type="Resource" uid="uid://dsvvem573xmui" path="res://quake controller/wallRunAnim.tres" id="11_ted11"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8cpb7"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_hwg68"]
+
+[sub_resource type="NoiseTexture3D" id="NoiseTexture3D_mj65v"]
+noise = SubResource("FastNoiseLite_hwg68")
+
+[sub_resource type="Resource" id="Resource_3as0d"]
+script = ExtResource("7_dascu")
+noise_texture = SubResource("NoiseTexture3D_mj65v")
+amplitude = Vector3(0.01, 0, 0.01)
+
+[sub_resource type="Resource" id="Resource_0qhj7"]
+script = ExtResource("8_v7qid")
+RotationShake = Array[ExtResource("6_qarov")]([SubResource("Resource_3as0d")])
+
+[sub_resource type="Resource" id="Resource_jq34v"]
+script = ExtResource("9_d2tfl")
+frequency = Vector3(2, 3, 1)
+phase = Vector3(0, 0, 0)
+amplitude = Vector3(0.01, 0.1, 0)
+
+[sub_resource type="Resource" id="Resource_gc7ew"]
+script = ExtResource("8_v7qid")
+PositionShake = Array[ExtResource("6_qarov")]([SubResource("Resource_jq34v")])
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_v7r3x"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_apj3w"]
+height = 0.95
+radius = 0.45
+
+[sub_resource type="Gradient" id="Gradient_5v8pf"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_rkk8b"]
+gradient = SubResource("Gradient_5v8pf")
+
+[node name="Player" type="CharacterBody3D" unique_id=2102309141]
+collision_layer = 2
+floor_constant_speed = true
+floor_snap_length = 0.4
+script = ExtResource("1_vual4")
+airStrafeCurve = ExtResource("2_utu1d")
+slideDragCurve = ExtResource("3_k42sr")
+slopeAngleDragCurve = ExtResource("4_7oetm")
+wallrunCurve = ExtResource("3_2pbow")
+
+[node name="Head" type="Node3D" parent="." unique_id=1217304279]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+
+[node name="wallJumpCast" type="ShapeCast3D" parent="Head" unique_id=554898351]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.8, 0)
+shape = SubResource("CapsuleShape3D_8cpb7")
+target_position = Vector3(0, 0, 0)
+
+[node name="CameraHolder" type="Node3D" parent="Head" unique_id=215493354]
+
+[node name="CameraShaker" type="Node3D" parent="Head/CameraHolder" unique_id=1063596429]
+transform = Transform3D(1, 2.98023e-08, -1.49012e-08, -2.98023e-08, 1, 3.72529e-09, 1.49012e-08, -3.72529e-09, 1, 3.16795e-08, -5.95464e-08, -5.96046e-08)
+
+[node name="Camera" type="Camera3D" parent="Head/CameraHolder/CameraShaker" unique_id=2083240120 node_paths=PackedStringArray("player")]
+fov = 95.0
+script = ExtResource("6_m7kuq")
+player = NodePath("../../../..")
+jumpAnimation = ExtResource("7_1rx65")
+landPosAnimation = ExtResource("8_v06m6")
+landRotAnimation = ExtResource("9_cmqbn")
+slideAnimation = ExtResource("10_qdupb")
+wallRunAnimation = ExtResource("11_ted11")
+
+[node name="ShakerComponent3D" type="Node3D" parent="Head/CameraHolder/CameraShaker" unique_id=1812819383]
+script = ExtResource("5_14s8p")
+AutoPlay = true
+shakerPreset = SubResource("Resource_0qhj7")
+
+[node name="ShakerComponent3D2" type="Node3D" parent="Head/CameraHolder/CameraShaker" unique_id=917402600]
+script = ExtResource("5_14s8p")
+AutoPlay = true
+shakerPreset = SubResource("Resource_gc7ew")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=359314488]
+shape = SubResource("CylinderShape3D_v7r3x")
+
+[node name="CeilingCheck" type="ShapeCast3D" parent="." unique_id=117372911]
+shape = SubResource("CylinderShape3D_apj3w")
+target_position = Vector3(0, 0.5, 0)
+
+[node name="HUD" type="Control" parent="." unique_id=1778205890]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_lock_ = true
+
+[node name="Control" type="Control" parent="HUD" unique_id=1313255663]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="HUD/Control" unique_id=394448357]
+scale = Vector2(0.037, 10)
+texture = SubResource("GradientTexture1D_rkk8b")
+
+[node name="speed_label" type="Label" parent="HUD/Control" unique_id=2066489572]
+layout_mode = 0
+offset_left = -58.0
+offset_top = 49.0
+offset_right = 55.0
+offset_bottom = 72.0

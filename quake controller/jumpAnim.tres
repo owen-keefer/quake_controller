@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ProceduralCurve" format=3 uid="uid://utqoywxff7vm"]
+
+[ext_resource type="Script" uid="uid://dqc4kgm5ur7my" path="res://quake controller/ProceduralCurve.gd" id="1_vtfct"]
+
+[sub_resource type="Curve" id="Curve_yt3cq"]
+_limits = [-1.0, 1.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.0879121, 1), 0.0, 0.0, 0, 0, Vector2(0.568421, -0.340659), 0.0, 0.0, 0, 0, Vector2(1, 1.49012e-08), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[resource]
+script = ExtResource("1_vtfct")
+curve = SubResource("Curve_yt3cq")
+length = 0.8

@@ -1,45 +1,45 @@
-[gd_scene format=3 uid="uid://bwxbn1uxc34jv"]
+[gd_scene format=3 uid="uid://cl7wxb0ubvr4k"]
 
-[ext_resource type="Material" uid="uid://dh0b8gjiy4m3u" path="res://addons/extended-strafer-controller/demo-world/csg.tres" id="1_y6qrk"]
-[ext_resource type="PackedScene" uid="uid://c6c1orwh1bmhe" path="res://addons/extended-strafer-controller/strafer-controller/player.tscn" id="2_kn2c6"]
-[ext_resource type="Script" uid="uid://befvegr3hgdtb" path="res://addons/extended-strafer-controller/modular-controller-base/Controller3DSettings.gd" id="2_l5lso"]
-[ext_resource type="Script" uid="uid://c6ybssry8e6i7" path="res://addons/extended-strafer-controller/modular-controller-base/BaseMovementState.gd" id="3_5k15j"]
-[ext_resource type="Script" uid="uid://d3s0nw607nrw" path="res://addons/extended-strafer-controller/strafer-controller/states/StraferAirState.gd" id="3_6w6x8"]
-[ext_resource type="Script" uid="uid://blj4guiesbni8" path="res://addons/extended-strafer-controller/strafer-controller/states/StraferGroundState.gd" id="4_wmbkc"]
-[ext_resource type="Script" uid="uid://blq00x2wl4qtw" path="res://addons/extended-strafer-controller/strafer-controller/states/StraferSlideState.gd" id="5_m8uup"]
+[ext_resource type="PackedScene" uid="uid://c6c1orwh1bmhe" path="res://addons/extended-strafer-controller/strafer-controller/player.tscn" id="1_2ybgh"]
+[ext_resource type="Script" uid="uid://befvegr3hgdtb" path="res://addons/extended-strafer-controller/modular-controller-base/Controller3DSettings.gd" id="2_vmh76"]
+[ext_resource type="Script" uid="uid://c6ybssry8e6i7" path="res://addons/extended-strafer-controller/modular-controller-base/BaseMovementState.gd" id="3_fkck4"]
+[ext_resource type="Script" uid="uid://blj4guiesbni8" path="res://addons/extended-strafer-controller/strafer-controller/states/StraferGroundState.gd" id="4_mtw22"]
+[ext_resource type="Script" uid="uid://d3s0nw607nrw" path="res://addons/extended-strafer-controller/strafer-controller/states/StraferAirState.gd" id="5_6lepv"]
+[ext_resource type="Script" uid="uid://blq00x2wl4qtw" path="res://addons/extended-strafer-controller/strafer-controller/states/StraferSlideState.gd" id="6_mridc"]
+[ext_resource type="Material" uid="uid://dh0b8gjiy4m3u" path="res://addons/extended-strafer-controller/demo-world/csg.tres" id="7_vpf0i"]
 
 [sub_resource type="Resource" id="Resource_reboa"]
-script = ExtResource("2_l5lso")
+script = ExtResource("2_vmh76")
 
 [sub_resource type="Resource" id="Resource_xnfcm"]
-script = ExtResource("4_wmbkc")
+script = ExtResource("4_mtw22")
 
 [sub_resource type="Resource" id="Resource_buv5u"]
-script = ExtResource("3_6w6x8")
+script = ExtResource("5_6lepv")
 
 [sub_resource type="Resource" id="Resource_n483h"]
-script = ExtResource("5_m8uup")
+script = ExtResource("6_mridc")
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_0y314"]
 
-[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_rcthy"]
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_dkosc"]
 noise = SubResource("FastNoiseLite_0y314")
 seamless = true
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_pu8y8"]
 sky_top_color = Color(0.0588235, 0.486275, 0.662745, 1)
 sky_horizon_color = Color(0.541176, 0.678431, 0.741176, 1)
-sky_cover = SubResource("NoiseTexture2D_rcthy")
+sky_cover = SubResource("NoiseTexture2D_dkosc")
 ground_bottom_color = Color(0, 0, 0, 1)
 ground_horizon_color = Color(0.882353, 0.92549, 0.945098, 1)
 ground_curve = 0.117128
 
-[sub_resource type="Sky" id="Sky_8p10r"]
+[sub_resource type="Sky" id="Sky_nd5fr"]
 sky_material = SubResource("ProceduralSkyMaterial_pu8y8")
 
 [sub_resource type="Environment" id="Environment_rh0if"]
 background_mode = 2
-sky = SubResource("Sky_8p10r")
+sky = SubResource("Sky_nd5fr")
 tonemap_mode = 2
 ssao_enabled = true
 ssil_enabled = true
@@ -50,11 +50,11 @@ volumetric_fog_density = 0.01
 
 [node name="World" type="Node3D" unique_id=728576587]
 
-[node name="Player" parent="." unique_id=2116528632 instance=ExtResource("2_kn2c6")]
+[node name="Player" parent="." unique_id=2116528632 instance=ExtResource("1_2ybgh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.2934, 15.086, 31.8615)
 floor_snap_length = 0.5
 _START_SETTINGS = SubResource("Resource_reboa")
-_START_STATES = Array[ExtResource("3_5k15j")]([SubResource("Resource_xnfcm"), SubResource("Resource_buv5u"), SubResource("Resource_n483h")])
+_START_STATES = Array[ExtResource("3_fkck4")]([SubResource("Resource_xnfcm"), SubResource("Resource_buv5u"), SubResource("Resource_n483h")])
 
 [node name="env" type="Node3D" parent="." unique_id=190331480]
 
@@ -72,19 +72,19 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.75, 0, -100.25)
 use_collision = true
 size = Vector3(116.5, 1, 349.5)
-material = ExtResource("1_y6qrk")
+material = ExtResource("7_vpf0i")
 
 [node name="CSGBox3D2" type="CSGBox3D" parent="world" unique_id=1445129438]
 transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -7, 1.5, 31)
 use_collision = true
 size = Vector3(34, 2, 34)
-material = ExtResource("1_y6qrk")
+material = ExtResource("7_vpf0i")
 
 [node name="Wall" type="CSGBox3D" parent="world" unique_id=1905817871]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3.5, -11.5)
 use_collision = true
 size = Vector3(10, 6, 1)
-material = ExtResource("1_y6qrk")
+material = ExtResource("7_vpf0i")
 
 [node name="CSGBox3D3" type="CSGBox3D" parent="world/Wall" unique_id=1258378540]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -1.5, 0)
@@ -101,32 +101,32 @@ transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 25, 0.
 use_collision = true
 polygon = PackedVector2Array(-3, 2.08165e-12, -3, 2, 1.5, 0, 1, 0)
 depth = 3.0
-material = ExtResource("1_y6qrk")
+material = ExtResource("7_vpf0i")
 
 [node name="CSGPolygon3D2" type="CSGPolygon3D" parent="world" unique_id=815656562]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 78, 0.5, 11)
 use_collision = true
 polygon = PackedVector2Array(-30, 0, -30, 10, 1.5, 0, 1, 0)
 depth = 50.0
-material = ExtResource("1_y6qrk")
+material = ExtResource("7_vpf0i")
 
 [node name="CSGPolygon3D5" type="CSGPolygon3D" parent="world" unique_id=1823062752]
 transform = Transform3D(1.31134e-07, 0, -1, 0, 1, 0, 1, 0, 1.31134e-07, 28, 0.5, 71)
 use_collision = true
 polygon = PackedVector2Array(-30, 0, -30, 10, 1.5, 0, 1, 0)
 depth = 5.0
-material = ExtResource("1_y6qrk")
+material = ExtResource("7_vpf0i")
 
 [node name="CSGPolygon3D3" type="CSGPolygon3D" parent="world" unique_id=1290247801]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 28, 0.5, 11)
 use_collision = true
 polygon = PackedVector2Array(-30, 0, -30, 20, 1.5, 0, 1, 0)
 depth = 3.0
-material = ExtResource("1_y6qrk")
+material = ExtResource("7_vpf0i")
 
 [node name="CSGPolygon3D4" type="CSGPolygon3D" parent="world" unique_id=251603446]
 transform = Transform3D(1, 0, 1.06581e-14, 0, 1, 0, -1.06581e-14, 0, 1, -13.5, 0.5, 11)
 use_collision = true
 polygon = PackedVector2Array(-3, 2.08165e-12, -3, 4, 1.5, 0, 1, 0)
 depth = 3.0
-material = ExtResource("1_y6qrk")
+material = ExtResource("7_vpf0i")

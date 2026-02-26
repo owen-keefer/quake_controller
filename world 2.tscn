@@ -1,0 +1,113 @@
+[gd_scene format=3 uid="uid://cmjeaiig5r5tb"]
+
+[ext_resource type="Material" uid="uid://dh0b8gjiy4m3u" path="res://addons/extended-strafer-controller/demo-world/csg.tres" id="1_6v0fw"]
+[ext_resource type="PackedScene" uid="uid://callt40l2nsen" path="res://quake controller/player.tscn" id="2_6v0fw"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_glwix"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_dkosc"]
+noise = SubResource("FastNoiseLite_glwix")
+seamless = true
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_p8roh"]
+sky_top_color = Color(0.0588235, 0.486275, 0.662745, 1)
+sky_horizon_color = Color(0.541176, 0.678431, 0.741176, 1)
+sky_cover = SubResource("NoiseTexture2D_dkosc")
+ground_bottom_color = Color(0, 0, 0, 1)
+ground_horizon_color = Color(0.882353, 0.92549, 0.945098, 1)
+ground_curve = 0.117128
+
+[sub_resource type="Sky" id="Sky_nd5fr"]
+sky_material = SubResource("ProceduralSkyMaterial_p8roh")
+
+[sub_resource type="Environment" id="Environment_ija4f"]
+background_mode = 2
+sky = SubResource("Sky_nd5fr")
+tonemap_mode = 2
+ssao_enabled = true
+ssil_enabled = true
+sdfgi_enabled = true
+sdfgi_use_occlusion = true
+glow_enabled = true
+volumetric_fog_density = 0.01
+
+[node name="Node3D" type="Node3D" unique_id=1858993163]
+
+[node name="world" type="Node3D" parent="." unique_id=1273383965]
+
+[node name="env" type="Node3D" parent="world" unique_id=334269477]
+transform = Transform3D(1, 0, 1.06581e-14, 0, 1, 0, -1.06581e-14, 0, 1, -13.5, 0.5, 11)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="world/env" unique_id=1734150484]
+environment = SubResource("Environment_ija4f")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="world/env" unique_id=1220713520]
+transform = Transform3D(1, 0, 0, 0, 0.794351, 0.607459, 0, -0.607459, 0.794351, 0, 7.69608, 9.63598)
+light_energy = 2.0
+shadow_enabled = true
+
+[node name="CSGBox3D" type="CSGBox3D" parent="world" unique_id=21864657]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.75, 0, -100.25)
+use_collision = true
+size = Vector3(116.5, 1, 349.5)
+material = ExtResource("1_6v0fw")
+
+[node name="CSGBox3D2" type="CSGBox3D" parent="world" unique_id=1347257110]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -7, 1.5, 31)
+use_collision = true
+size = Vector3(34, 2, 34)
+material = ExtResource("1_6v0fw")
+
+[node name="Wall" type="CSGBox3D" parent="world" unique_id=1856721914]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3.5, -11.5)
+use_collision = true
+size = Vector3(10, 6, 1)
+material = ExtResource("1_6v0fw")
+
+[node name="CSGBox3D3" type="CSGBox3D" parent="world/Wall" unique_id=997331439]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -1.5, 0)
+operation = 2
+size = Vector3(2, 3, 3)
+
+[node name="CSGBox3D4" type="CSGBox3D" parent="world/Wall" unique_id=2044466018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -2.4, 0)
+operation = 2
+size = Vector3(2, 1.2, 3)
+
+[node name="CSGPolygon3D" type="CSGPolygon3D" parent="world" unique_id=2033930692]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 25, 0.5, 11)
+use_collision = true
+polygon = PackedVector2Array(-3, 2.08165e-12, -3, 2, 1.5, 0, 1, 0)
+depth = 3.0
+material = ExtResource("1_6v0fw")
+
+[node name="CSGPolygon3D2" type="CSGPolygon3D" parent="world" unique_id=1616077472]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 78, 0.5, 11)
+use_collision = true
+polygon = PackedVector2Array(-30, 0, -30, 10, 1.5, 0, 1, 0)
+depth = 50.0
+material = ExtResource("1_6v0fw")
+
+[node name="CSGPolygon3D5" type="CSGPolygon3D" parent="world" unique_id=911339363]
+transform = Transform3D(1.31134e-07, 0, -1, 0, 1, 0, 1, 0, 1.31134e-07, 28, 0.5, 71)
+use_collision = true
+polygon = PackedVector2Array(-30, 0, -30, 10, 1.5, 0, 1, 0)
+depth = 5.0
+material = ExtResource("1_6v0fw")
+
+[node name="CSGPolygon3D3" type="CSGPolygon3D" parent="world" unique_id=786026118]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 28, 0.5, 11)
+use_collision = true
+polygon = PackedVector2Array(-30, 0, -30, 20, 1.5, 0, 1, 0)
+depth = 3.0
+material = ExtResource("1_6v0fw")
+
+[node name="CSGPolygon3D4" type="CSGPolygon3D" parent="world" unique_id=177866931]
+transform = Transform3D(1, 0, 1.06581e-14, 0, 1, 0, -1.06581e-14, 0, 1, -13.5, 0.5, 11)
+use_collision = true
+polygon = PackedVector2Array(-3, 2.08165e-12, -3, 4, 1.5, 0, 1, 0)
+depth = 3.0
+material = ExtResource("1_6v0fw")
+
+[node name="Player" parent="." unique_id=1920995235 instance=ExtResource("2_6v0fw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.452141, 12.101025, 37.4981)

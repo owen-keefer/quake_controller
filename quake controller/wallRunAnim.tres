@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ProceduralCurve" format=3 uid="uid://dsvvem573xmui"]
+
+[ext_resource type="Script" uid="uid://dqc4kgm5ur7my" path="res://quake controller/ProceduralCurve.gd" id="1_67dyi"]
+
+[sub_resource type="Curve" id="Curve_wldyo"]
+_data = [Vector2(0, 0), 0.0, 2.44444, 0, 0, Vector2(1, 1), 0.3, 0.0, 0, 0]
+point_count = 2
+
+[resource]
+script = ExtResource("1_67dyi")
+curve = SubResource("Curve_wldyo")
+length = 0.2
