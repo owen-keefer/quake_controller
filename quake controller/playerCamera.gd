@@ -84,13 +84,12 @@ func endTilt(anim : ProceduralCurve) -> void:
     else:
         anim.start_backwards(rotation_degrees.z)
 
-func startWallRun(left : bool) -> void:
-    wallRunTilt = -wallRunTilt if (wallRunTilt < 0 and !left) or (wallRunTilt > 0 and left) else wallRunTilt
+func startWallRun() -> void:
     wallRunAnimation.targets["max"] = wallRunTilt
     wallRunAnimation.targets["snap"] = wallRunTilt
     startTilt(wallRunAnimation)
 
-func endWallRun(left : bool) -> void:
+func endWallRun() -> void:
     endTilt(wallRunAnimation)
 
 func startSlide() -> void:

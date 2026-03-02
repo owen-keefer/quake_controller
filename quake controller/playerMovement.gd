@@ -2,8 +2,8 @@ extends CharacterBody3D
 class_name PlayerMovement
 
 var speed : float = 15
-var gravity : float = 22
-var jump : float = 11
+var gravity : float = 28
+var jump : float = 14
 
 var cam_accel : float = 40
 var mouse_sense : float = 0.1
@@ -58,22 +58,23 @@ const crouchSpeed : float = 6; const crouchAccel : float = 4
 #Sliding
 @export var slideDragCurve : Curve
 @export var slopeAngleDragCurve : Curve
+const maxSlideAngle : float = 10.0 #degrees
 const slideAccel : float = 0.8
 var slideCurvePoint : float = 0.0
 const slideDragTime : float = .6
-const startSlideThresh : float = 13
+const startSlideThresh : float = 12.0
 const endSlideSpeed : float = 11
 const slideBoostForce : float = 4.0
-const slideBoostTime : float = 2.0
+const slideBoostTime : float = 0.0
 var canSlideBoost : bool = true
 const maxSlideSlopeSpeed : float = 25.0
-const slideSlopeForce : float = 4.0
+const slideSlopeForce : float = 8.0
 
 #Walljumping
 @onready var wallJumpCast : ShapeCast3D = $Head/wallJumpCast
 const wallJumpForce : float = 12.0
 const wallJumpUpForce : float = 0.8
-const wallJumpAwayForce : float = 0.6
+const wallJumpAwayForce : float = 0.4
 const wallJumpForwardForce : float = 0.8
 const wallJumpDetectionDistance : float = 1.5
 #Prevent jumping against the same wall over and over
@@ -86,9 +87,13 @@ const wallrunHeight : float = 4.0
 var wallrunStartVel : Vector3
 var wallrunPoint : float = 0.0
 const wallrunTime : float = 2.0
-const wallRunResetTime : float = 1.0
-var hasLeftWallRun : bool = false; var hasRightWallRun : bool = false
-var leftWallRun : bool = true
+var wallRunResetTimer : float = 0.0
+const wallRunResetTime : float = 2.0
+var lastWallRunNormal : Vector3 = Vector3.ZERO
+var currentWallNormal : Vector3 = Vector3.ZERO
+const wallRunCooldownAngle : float = 0.2
+
+var wallRunSpeed : float = 0.0
 var prevWallNormal : Vector3
 var prevWallRunPoint : Vector3 = Vector3(-INF, -INF, -INF)
 
@@ -106,8 +111,8 @@ signal justJumped;
 signal justLanded;
 signal startSlide; 
 signal endSlide;
-signal startWallRun(isLeft : bool); 
-signal endWallRun(isLeft : bool);
+signal startWallRun
+signal endWallRun
 
 
 func _ready() -> void:
@@ -148,6 +153,18 @@ func _process(delta : float) -> void:
     var targetFov = lerp(fov, fov + speedFovIncrease, min(velocity.length() / shakeMaxSpeed, 1.0) )
     realCamera.fov = lerp(realCamera.fov, targetFov, fovLerpSpeed * delta)
 
+##state printer
+func getStateName(state : MOVESTATES) -> String:
+    match state:
+        MOVESTATES.GROUND:
+            return "GROUND"
+        MOVESTATES.AIR:
+            return "AIR"
+        MOVESTATES.SLIDING:
+            return "SLIDING"
+        MOVESTATES.WALLRUNNING:
+            return "WALLRUNNING"
+    return "UNKNOWN"
 
 func _physics_process(delta : float) -> void:	
     match currentState:
@@ -160,6 +177,12 @@ func _physics_process(delta : float) -> void:
         MOVESTATES.WALLRUNNING:
             wallrun(delta)
     
+    ##wallrun reset timer
+    if wallRunResetTimer > 0.0:
+        wallRunResetTimer -= delta
+        
+        if wallRunResetTimer <= 0.0:
+            lastWallRunNormal = Vector3.ZERO
     
     if (Input.is_action_just_pressed("jump") or jumpQueued) and canJump:
         canJump = false
@@ -174,7 +197,11 @@ func _physics_process(delta : float) -> void:
     var horizontal_velocity = velocity
     horizontal_velocity.y = 0
     var speed = Vector3(velocity.x, 0, velocity.z).length()
-    speed_label.text = "Speed: %.2f" % speed
+    speed_label.text = "Speed: %.2f\nState: %s\nPrev: %s" % [
+        speed,
+        getStateName(currentState),
+        getStateName(previousState)
+    ]
 
 #WALLJUMP HELPER FUNCTION    
 func canWallJump() -> bool:
@@ -190,67 +217,95 @@ func canWallJump() -> bool:
             return true
             
     return false
+    
+#WALLRUN HELPER FUNCTION    
+func canWallRun() -> bool:
 
+    if !is_on_wall_only():
+        return false
+
+    if wallRunResetTimer > 0.0:
+        var normal := get_wall_normal().normalized()
+        return normal.angle_to(lastWallRunNormal) > wallRunCooldownAngle
+
+    return true
+ 
+#SLIDE HELPER FUNCTION
+@export var maxSlideStartAngle : float = 10.0 # degrees
+
+func canStartSlide() -> bool:
+    if !is_on_floor():
+        return false
+
+    if is_on_wall():
+        return false
+
+    var floor_normal := get_floor_normal()
+    var horizontal_vel := velocity
+    horizontal_vel.y = 0
+
+    if horizontal_vel.length() < 0.1:
+        return false
+
+    var floor_angle := rad_to_deg(acos(floor_normal.dot(Vector3.UP)))
+
+    var slope_down := Vector3.DOWN.slide(floor_normal).normalized()
+
+    var moving_downhill := horizontal_vel.dot(slope_down) > 0.0
+
+    return moving_downhill or floor_angle <= maxSlideStartAngle
+    
 #WALLJUMP
 func performWallJump():
     var wall_normal : Vector3
     if is_on_wall():
-        wall_normal = get_wall_normal()
+        wall_normal = get_wall_normal().normalized()
     else:
-        wall_normal = wallJumpCast.get_collision_normal(0)
+        wall_normal = wallJumpCast.get_collision_normal(0).normalized()
 
-    # Camera forward direction
-    var cam_forward := -head.global_transform.basis.z
-    cam_forward.y = 0
-    cam_forward = cam_forward.normalized()
+    # Separate horizontal and vertical velocity
+    var horizontal := velocity
+    horizontal.y = 0
 
-    var wall_forward := cam_forward.slide(wall_normal).normalized()
+    # Reflect horizontal velocity off wall (gives natural bounce)
+    var reflected := horizontal.bounce(wall_normal)
 
-    # Build jump vector
-    var jump_vector : Vector3 = Vector3.ZERO
-    jump_vector += wall_normal * wallJumpAwayForce
-    jump_vector += wall_forward * wallJumpForwardForce
-    jump_vector += Vector3.UP * wallJumpUpForce
+    # Keep vertical velocity independent
+    velocity.y = wallJumpForce * wallJumpUpForce
 
-    # Normalize and scale
-    jump_vector = jump_vector.normalized() * wallJumpForce
+    # Combine reflected horizontal velocity with a fixed wall jump push
+    var push_strength : float = wallJumpAwayForce * speed
+    velocity.x = reflected.x + wall_normal.x * push_strength
+    velocity.z = reflected.z + wall_normal.z * push_strength
 
-    # Add to velocity if current component is smaller
-    for axis in ["x", "y", "z"]:
-        if abs(jump_vector[axis]) > abs(velocity[axis]):
-            velocity[axis] = jump_vector[axis]
-        else:
-            velocity[axis] += 0.35 * jump_vector[axis]
-
-    # Remember last wall jumped
+    # Remember wall jumped to prevent immediate re-wallrun
     lastWallJumpNormal = wall_normal
-
     resetWallRun()
     changeState(MOVESTATES.AIR)
         
 func ground(delta : float) -> void:
     isCrouching = handleCrouch(delta)
-    
+
     floor_snap_length = floorSnapLength
     gravity_vec = Vector3.ZERO
-    
-    if !isCrouching or (isCrouching and velocity.length() > startSlideThresh):
-        move(delta, floorAccel, floorDrag)
-        if isCrouching:
-            toSlide()
-    else:
-        move(delta, crouchAccel, floorDrag)
-    
+
+    move(delta, floorAccel, floorDrag)
+
+    # ONLY allow slide from ground state explicitly
+    if Input.is_action_pressed("crouch") and velocity.length() > startSlideThresh:
+        toSlide()
+        return
+
     groundToAir()
 
 
 func air(delta : float) -> void:
     isCrouching = handleCrouch(delta, false, true)
-    
     floor_snap_length = airSnapLength
     
     if hasJumped:
-        gravity_vec = (get_floor_normal() + Vector3.UP).normalized() * jump
+        velocity.y = max(velocity.y, 0.0)
+        velocity.y = jump
         hasJumped = false
     else:
         gravity_vec = Vector3.DOWN * gravity * delta
@@ -273,47 +328,46 @@ func air(delta : float) -> void:
     #reset wall jump ability
     if is_on_floor():
         lastWallJumpNormal = Vector3.ZERO
+        lastWallRunNormal = Vector3.ZERO
         canJump = true
-        hasLeftWallRun = false
-        hasRightWallRun = false
         wallrunPoint = 0.0
         emit_signal("justLanded")
             
     if is_on_floor():
-        if isCrouching and velocity.length() > startSlideThresh:
-            toSlide()
-        else:
-            changeState(MOVESTATES.GROUND)
-            hasLeftWallRun = false; hasRightWallRun = false
-            emit_signal("justLanded")
+        changeState(MOVESTATES.GROUND)
+        emit_signal("justLanded")
         canJump = true
+        return
         
-    
     if Input.is_action_just_pressed("jump"):
         queueJump()
     
-    ##WALLRUN START
-    if is_on_wall_only() and Input.is_action_pressed("crouch"):
-        if wallrunPoint >= 1.0:
-            return
-        
-        var leftWall : bool = isWallRunningLeft(get_last_slide_collision().get_position())
-        if not ((leftWall and hasLeftWallRun) or (!leftWall and hasRightWallRun)):
-            wallrunPoint = 0.0
-            if leftWall:
-                hasLeftWallRun = true
-                hasRightWallRun = false
-            else:
-                hasLeftWallRun = false
-                hasRightWallRun = true
-        elif position.y > prevWallRunPoint.y:
-            return
-        
-        changeState(MOVESTATES.WALLRUNNING)
-        wallrunStartVel = velocity
+# WALLRUN START
+    if is_on_wall_only() \
+    and Input.is_action_pressed("crouch") \
+    and canWallRun() \
+    and velocity.length() >= 8.0:
+
+        currentWallNormal = get_wall_normal().normalized()
+
+        # Store horizontal speed only (prevents vertical boosts triggering wallrun)
+        var horizontal := velocity
+        horizontal.y = 0
+
+        wallRunSpeed = horizontal.length() * 1.02
+
+        # Extra safety guard
+        if wallRunSpeed >= 8.0:
+            changeState(MOVESTATES.WALLRUNNING)
 
 
 func slide(delta : float) -> void:
+
+    # Immediately exit if airborne
+    if !is_on_floor():
+        changeState(MOVESTATES.AIR)
+        return
+        
     # Check if player is still holding crouch
     var holdingSlide := Input.is_action_pressed("crouch")
 
@@ -336,9 +390,10 @@ func slide(delta : float) -> void:
 
     var isSlideDownward : bool = velocity.dot(get_floor_normal()) > 0
     var angleCurveSamplePoint := get_floor_angle() / floor_max_angle if isSlideDownward else 0.0
-
-    if isSlideDownward and velocity.length() < maxSlideSlopeSpeed:
-        applyForce(velocity.normalized() * delta * slideSlopeForce)
+    var slopeAngleFactor : float = velocity.normalized().dot(get_floor_normal())
+    
+    if velocity.length() < maxSlideSlopeSpeed:
+        applyForce(velocity.normalized() * delta * slideSlopeForce * slopeAngleFactor)
 
     var slideDrag : float = slideDragCurve.sample(slideCurvePoint) * slopeAngleDragCurve.sample(angleCurveSamplePoint)
 
@@ -355,33 +410,55 @@ func slide(delta : float) -> void:
 
 
 func wallrun(delta : float):
-    var leftWallNormal : Vector3 = get_wall_normal().rotated(Vector3.UP, PI/2)
-    var rightWallNormal : Vector3 = get_wall_normal().rotated(Vector3.UP, -PI/2)
-    var newDir : Vector3 = leftWallNormal if leftWallNormal.angle_to(wallrunStartVel) < rightWallNormal.angle_to(wallrunStartVel) else rightWallNormal
-    
-    velocity = newDir.normalized() * clamp(wallrunStartVel.length(), speed/2, speed * 2.0)
-    if prevWallNormal != get_wall_normal():
-        velocity -= get_wall_normal() * 2
-    else:
-        velocity -= get_wall_normal() * 2
-    velocity += Vector3.UP * (wallrunCurve.sample(wallrunPoint) * wallrunHeight)
-    move_and_slide()
-    
-    if wallrunPoint < 1.0 and is_on_wall_only():
-        wallrunPoint += delta / wallrunTime
-    else:
-        changeState(MOVESTATES.AIR)
-        resetWallRun()
-    
-    if Input.is_action_pressed("jump"):
-        prevWallRunPoint = position
-        changeState(MOVESTATES.AIR)
-        performWallJump()
+    if velocity.length() < 8.0:
+        stopWallRun()
+        
+    if !is_on_wall_only():
+        stopWallRun()
         return
-        resetWallRun()
-    
-    prevWallNormal = get_wall_normal()
 
+    currentWallNormal = get_wall_normal().normalized()
+
+    # Get wall tangent direction
+    var wall_tangent := velocity.slide(currentWallNormal).normalized()
+
+    # Preserve original speed
+    var target_speed : float = max(wallRunSpeed, velocity.length())
+    
+    # Maintain momentum along wall
+    velocity.x = wall_tangent.x * target_speed
+    velocity.z = wall_tangent.z * target_speed
+
+    # Vertical influence from curve
+    velocity.y = wallrunCurve.sample(wallrunPoint) * wallrunHeight
+    
+    # Stick player to wall
+    velocity -= currentWallNormal * 6.0 * delta
+
+    move_and_slide()
+
+    # Progress wallrun timer
+    wallrunPoint += delta / wallrunTime
+
+    if wallrunPoint >= 1.0:
+        stopWallRun()
+        return
+
+    # Wall jump from wallrun
+    if Input.is_action_just_pressed("jump"):
+        performWallJump()
+        stopWallRun()
+        return
+
+func stopWallRun():
+
+    lastWallRunNormal = currentWallNormal
+
+    wallrunPoint = 0.0
+
+    wallRunResetTimer = wallRunResetTime  # Start cooldown
+
+    changeState(MOVESTATES.AIR)
 
 func changeState(newState : MOVESTATES) -> void:
     previousState = currentState
@@ -392,9 +469,9 @@ func changeState(newState : MOVESTATES) -> void:
     if currentState == MOVESTATES.SLIDING:
         emit_signal("startSlide")
     if currentState == MOVESTATES.WALLRUNNING:
-        emit_signal("startWallRun", leftWallRun)
+        emit_signal("startWallRun")
     if previousState == MOVESTATES.WALLRUNNING:
-        emit_signal("endWallRun", leftWallRun)
+        emit_signal("endWallRun")
     
 
 
@@ -414,13 +491,21 @@ func groundToAir() -> bool:
 
 
 func toSlide() -> bool:
+
+    # HARD LOCK: Only allow slide from ground state
+    if currentState != MOVESTATES.GROUND:
+        return false
+
+    if !canStartSlide():
+        return false
+
     if canSlideBoost:
         applyForce(velocity.normalized() * slideBoostForce)
         canSlideBoost = false
         executeAfterTime(slideBoostTime, func(): canSlideBoost = true)
+
     changeState(MOVESTATES.SLIDING)
     return true
-
 
 func executeAfterTime(time : float, function : Callable) -> void:
     await get_tree().create_timer(time).timeout
@@ -449,11 +534,8 @@ func handleCrouch(delta : float, forceCrouch : bool = false, forceUncrouch : boo
 
 func move(delta : float, accel : float, drag : float, speed : float = speed) -> void:
     #get keyboard input
-    direction = Vector3.ZERO
-    var h_rot : float = global_transform.basis.get_euler().y
-    var f_input : float = Input.get_axis("forward", "backward")
-    var h_input : float = Input.get_action_strength("right") - Input.get_action_strength("left")
-    direction = Vector3(h_input, 0, f_input).rotated(Vector3.UP, h_rot).normalized()
+    var input_dir: Vector2 = Input.get_vector("left", "right", "forward", "backward")
+    direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
     
     var wish_vel : Vector3 = direction * speed
     
@@ -480,31 +562,14 @@ func move(delta : float, accel : float, drag : float, speed : float = speed) -> 
                 velocity = lerp(velocity, wish_vel, accel * delta)
     
     else:
-        #if not currentState == MOVESTATES.SLIDING:
         velocity = lerp(velocity, wish_vel, drag * delta)
-        #else:
-            #velocity = lerp(velocity, wish_vel, (slideDragCurve.sample(slideCurvePoint) * drag) * delta)
     
     velocity += gravity_vec
     move_and_slide()
 
-
-func isWallRunningLeft(collisionPoint : Vector3) -> bool:
-    var localCollision : Vector3 = head.to_local(collisionPoint)
-    leftWallRun = not localCollision.x >= 0
-    return localCollision.x >= 0
-
-
 func resetWallRun() -> void:
-    if hasLeftWallRun:
-        executeAfterTime(wallRunResetTime, func(): hasLeftWallRun = false)
-    if hasRightWallRun:
-        executeAfterTime(wallRunResetTime, func(): hasRightWallRun = false)
-    if currentState != MOVESTATES.WALLRUNNING:
-        wallrunPoint = 0.0
-    prevWallNormal = Vector3.UP
-
-
+    wallrunPoint = 0.0
+    
 func getHorizontalAngle(vec1 : Vector3, vec2 : Vector3) -> float:
     vec1.y = 0
     vec2.y = 0
